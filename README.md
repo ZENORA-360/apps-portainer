@@ -19,3 +19,40 @@ Portainer CE is widely adopted in small to medium organizations and development 
 
 ## Relationship to Portainer Business Edition
 Portainer CE serves as the free, community-supported foundation of Portainer’s ecosystem. The Business Edition (BE) builds upon CE with additional enterprise-focused capabilities, such as advanced RBAC, external authentication, and commercial support options.
+
+
+
+----------------------------------------------------------------------------------------------------
+# Docker Socket Proxy
+Docker Socket Proxy is a lightweight security middleware developed by Tecnativa to safely expose the Docker Engine API through a controlled proxy interface. It restricts access to the sensitive docker.sock socket, allowing only specific API calls while blocking others. This design helps mitigate security risks in containerized environments.
+
+## Key facts
+- Developer: Tecnativa
+- Language: Go (Golang)
+- Primary use: Secure proxy for Docker socket access
+- License: MIT License
+- Deployment: Docker container
+
+## Purpose and design
+The proxy was created to address a major security issue: many Docker management tools require access to the host’s /var/run/docker.sock, which effectively grants root-level control of the host system. Docker Socket Proxy acts as an intermediary, forwarding only permitted API requests to the Docker daemon and rejecting others. This limits potential damage from compromised containers or untrusted applications.
+
+## Configuration and operation
+https://miro.medium.com/1%2AAcMXKsOs8echfmLx_PucdQ.png
+https://opengraph.githubassets.com/5d904d78e2a5bea1c73450e3a147c6049b702b62c205c837da33826dc3f30216/Tecnativa/docker-socket-proxy
+https://miro.medium.com/v2/resize%3Afit%3A2000/1%2AdWLiNmISt8Vxxq1xY1BODA.png
+
+Administrators configure the proxy by defining environment variables that whitelist specific Docker API endpoints (for example, read-only or container-management-only access). It can run as a service inside Docker itself, typically alongside other containers that require restricted socket communication. Common deployment setups use Traefik, Portainer, or Watchtower to safely interact through this proxy instead of the raw socket.
+
+## Security implications
+By isolating and filtering socket access, Docker Socket Proxy prevents arbitrary container control, image management, and host operations from less privileged services. It supports HTTPS and authentication layers, complementing other container-hardening measures such as network segmentation and least-privilege policies. Although it cannot fix all Docker security issues, it provides a practical mitigation strategy for multi-container deployments and shared environments.
+
+---------------------------------------------------------------------------------------------------
+Docker host
+   │
+   ├── docker-socket-proxy (2375)
+   │       │
+   │       └── /var/run/docker.sock (RO)
+   │
+   └── portainer
+          │
+          └── tcp://docker-socket-proxy:2375
